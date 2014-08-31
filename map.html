@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>(MOCKUP) Route Viz</title>
+    <style>
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+    <script src="https://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="config.js"> 
+      //  REFRESH_TIME
+      //  MAP_ZOOM
+      //  PATH_COLOR
+      //  PATH_OPACITY
+      //  PATH_WEIGHT
+      //  data
+    </script>
+    <script>
+      //TODO: no renderizar todo el mapa en cada refresh de path.
+
+      var iStepShowing = 0; //step counter
+      var steps = data.routes[0].legs[0].steps;
+      var n = steps.length;
+      var map; 
+
+      function mainLoop(){
+        render(iStepShowing);
+        iStepShowing++;
+        if(iStepShowing === n) return;
+        setTimeout(mainLoop,REFRESH_TIME);
+      }
+
+      function render(iStepShowing) {
+
+        var pathPoints = [];
+
+        for(var i = 0; i < n && i <= iStepShowing; i++){
+          pathPoints.push(new google.maps.LatLng(steps[i].end_location.lat, steps[i].end_location.lng));
+        }
+
+        console.log(steps[iStepShowing].html_instructions);
+        $("#map-info").append(steps[iStepShowing].html_instructions);
+
+        var currPos = new google.maps.LatLng(steps[iStepShowing].end_location.lat, steps[iStepShowing].end_location.lng);
+
+        var mapOptions = {
+          zoom: MAP_ZOOM,
+          center: currPos
+        }
+
+        map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+        var marker = new google.maps.Marker({
+            position: currPos,
+            map: map,
+            title: iStepShowing == 1? 'Start' : steps[iStepShowing].travel_mode + ' - ' + steps[iStepShowing].distance.text + ' - ' + steps[iStepShowing].duration.text
+        });
+
+
+        var pathToDraw = new google.maps.Polyline({
+          path: pathPoints,
+          geodesic: true,
+          strokeColor: PATH_COLOR,
+          strokeOpacity: PATH_OPACITY,
+          strokeWeight: PATH_WEIGHT
+        });
+
+        pathToDraw.setMap(map);
+      }
+
+      google.maps.event.addDomListener(window, 'load', mainLoop);
+      google.maps.event.addDomListener(window, 'click', render);
+
+    </script>
+  </head>
+  <body>
+    <div id="map-canvas"></div>
+    <div id="map-info"></div> 
+  </body>
+</html>
